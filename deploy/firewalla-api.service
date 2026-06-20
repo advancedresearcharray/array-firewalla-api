@@ -1,0 +1,17 @@
+[Unit]
+Description=Array Firewalla LAN management API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/array-firewalla-api
+EnvironmentFile=-/etc/default/firewalla-api
+ExecStart=/usr/bin/python3 /home/pi/array-firewalla-api/server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

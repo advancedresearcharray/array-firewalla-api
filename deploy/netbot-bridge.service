@@ -1,0 +1,18 @@
+[Unit]
+Description=Firewalla netbot bridge (mobile-app controller path)
+After=network-online.target redis.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/firewalla
+Environment=FIREWALLA_HOME=/home/pi/firewalla
+EnvironmentFile=-/etc/default/firewalla-api
+ExecStart=/home/pi/firewalla/bin/node /home/pi/array-firewalla-api/bridge/netbot-bridge.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

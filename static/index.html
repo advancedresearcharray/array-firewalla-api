@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firewalla Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">Firewalla<span> Dashboard</span></div>
+      <nav class="nav" id="nav">
+        <div class="nav-item active" data-view="overview"><span class="nav-icon">◉</span><span>Overview</span></div>
+        <div class="nav-item" data-view="devices"><span class="nav-icon">⬡</span><span>Devices</span></div>
+        <div class="nav-item" data-view="alarms"><span class="nav-icon">⚠</span><span>Alarms</span></div>
+        <div class="nav-item" data-view="rules"><span class="nav-icon">☰</span><span>Rules</span></div>
+        <div class="nav-item" data-view="network"><span class="nav-icon">↔</span><span>Network</span></div>
+        <div class="nav-item" data-view="tools"><span class="nav-icon">⚙</span><span>Tools</span></div>
+        <div class="nav-item" data-view="settings"><span class="nav-icon">✎</span><span>Settings</span></div>
+      </nav>
+      <div class="sidebar-footer" id="sidebar-status">Not connected</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h1 id="page-title">Overview</h1>
+        <div class="topbar-actions">
+          <span class="status-pill offline" id="conn-pill">Offline</span>
+          <label class="toggle-row" style="padding:0;border:none;gap:0.5rem">
+            <span class="toggle-label" style="font-size:0.85rem">Auto refresh</span>
+            <label class="switch"><input type="checkbox" id="auto-refresh-toggle"><span class="slider"></span></label>
+          </label>
+          <button class="btn btn-primary" id="btn-refresh">Refresh</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="auth-banner" id="auth-banner" hidden>
+          <strong>Token required.</strong> Open Settings, paste your bearer token, and click Save settings.
+        </div>
+        <section class="view active" id="view-overview">
+          <div class="stats-grid" id="overview-stats"></div>
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel-header">System</div>
+              <div class="panel-body" id="overview-sysinfo"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">Quick actions</div>
+              <div class="panel-body">
+                <div class="btn-group">
+                  <button class="btn" data-action="refresh-hosts">Reload devices</button>
+                  <button class="btn" data-action="refresh-alarms">Reload alarms</button>
+                  <button class="btn btn-danger" data-action="alarm-delete-active-all">Clear active alarms</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">Recent alarms</div>
+            <div class="panel-body flush" id="overview-alarms"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-devices">
+          <div class="search-bar">
+            <input type="search" id="device-search" placeholder="Search name, IP, MAC, vendor…">
+            <select id="device-sort">
+              <option value="lastActive">Last active</option>
+              <option value="name">Name</option>
+              <option value="ip">IP</option>
+            </select>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span>Devices <span id="device-count" class="badge muted">0</span></span>
+            </div>
+            <div class="panel-body flush" id="devices-table"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-alarms">
+          <div class="search-bar">
+            <input type="search" id="alarm-search" placeholder="Search alarms…">
+            <select id="alarm-state">
+              <option value="">All states</option>
+              <option value="active">Active</option>
+              <option value="archive">Archived</option>
+            </select>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span>Alarms</span>
+              <div class="btn-group">
+                <button class="btn btn-sm" data-action="alarm-ignore-all">Ignore all</button>
+                <button class="btn btn-sm btn-danger" data-action="alarm-delete-active-all">Delete active all</button>
+              </div>
+            </div>
+            <div class="panel-body flush" id="alarms-table"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-rules">
+          <div class="search-bar">
+            <input type="search" id="policy-search" placeholder="Search policies…">
+          </div>
+          <div class="panel">
+            <div class="panel-header">Policies <span id="policy-count" class="badge muted">0</span></div>
+            <div class="panel-body flush" id="policies-table"></div>
+          </div>
+          <div class="search-bar">
+            <input type="search" id="exception-search" placeholder="Search exceptions…">
+          </div>
+          <div class="panel">
+            <div class="panel-header">Exceptions <span id="exception-count" class="badge muted">0</span></div>
+            <div class="panel-body flush" id="exceptions-table"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-network">
+          <div class="stats-grid" id="network-stats"></div>
+          <div class="panel">
+            <div class="panel-header">Interfaces</div>
+            <div class="panel-body flush" id="network-interfaces"></div>
+          </div>
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel-header">DHCP pools</div>
+              <div class="panel-body flush" id="network-dhcp"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">WAN &amp; routing</div>
+              <div class="panel-body" id="network-wan"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">Services</div>
+            <div class="panel-body" id="network-services"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">VPN profiles</div>
+            <div class="panel-body flush" id="vpn-table"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-tools">
+          <div class="panel">
+            <div class="panel-header">Gaming scripts</div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <label>
+                  <strong>Script</strong>
+                  <select id="tool-script"></select>
+                </label>
+                <label>
+                  <strong>Arguments (space-separated)</strong>
+                  <input type="text" id="tool-args" placeholder="optional args">
+                </label>
+                <label class="toggle-row" style="padding:0;border:none">
+                  <span>
+                    <span class="toggle-label">Run with sudo</span>
+                    <div class="toggle-desc">Required for some QoS and route scripts</div>
+                  </span>
+                  <label class="switch"><input type="checkbox" id="tool-sudo"><span class="slider"></span></label>
+                </label>
+                <div class="form-actions">
+                  <button class="btn btn-primary" id="btn-run-script">Run script</button>
+                  <button class="btn" id="btn-system-probe">System probe</button>
+                </div>
+                <pre class="mono" id="tool-output" style="margin:0;white-space:pre-wrap;min-height:4rem;background:var(--panel-2);padding:0.75rem;border-radius:var(--radius);border:1px solid var(--border)"></pre>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">Admin</div>
+            <div class="panel-body">
+              <div class="btn-group">
+                <button class="btn btn-danger" id="btn-admin-restart">Restart API services</button>
+              </div>
+              <p class="toggle-desc" style="margin-top:0.75rem">Restarts netbot-bridge and firewalla-api on the box. Connection may drop briefly.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-settings">
+          <div class="panel">
+            <div class="panel-header">Connection</div>
+            <div class="panel-body">
+              <form class="form-grid" id="settings-form">
+                <label>
+                  <strong>API base URL</strong>
+                  <input type="url" id="setting-api-url" required placeholder="http://A.A.A.A:9378">
+                </label>
+                <label>
+                  <strong>Bearer token</strong>
+                  <input type="password" id="setting-token" autocomplete="off" placeholder="From /etc/default/firewalla-api">
+                </label>
+                <label>
+                  <strong>Auto-refresh interval (seconds)</strong>
+                  <input type="number" id="setting-refresh" min="0" max="3600" value="30">
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">Save settings</button>
+                  <button type="button" class="btn" id="btn-test-connection">Test connection</button>
+                  <button type="button" class="btn btn-danger" id="btn-clear-settings">Clear saved</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">Dashboard toggles</div>
+            <div class="panel-body" id="settings-toggles">
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Confirm destructive actions</div>
+                  <div class="toggle-desc">Ask before bulk alarm delete or service restart</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="setting-confirm" checked><span class="slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Compact tables</div>
+                  <div class="toggle-desc">Denser row spacing on large lists</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="setting-compact"><span class="slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="device-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <strong id="device-modal-title">Device</strong>
+        <button class="btn btn-sm" id="device-modal-close">Close</button>
+      </div>
+      <div class="modal-body" id="device-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+  <div class="toast-stack" id="toasts"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
