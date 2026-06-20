@@ -2,6 +2,8 @@
 
 HTTP management API on **Firewalla Gold/Purple**, bound to your **Firewalla LAN IP** and restricted to your **LAN CIDR**. Provides **full mobile-app parity** via the same netbot controller the Firewalla app uses — no SSH required.
 
+> **Disclaimer:** This is an independent community project. It is **not affiliated with, endorsed by, or supported by Firewalla Inc.** It exposes internal Firewalla APIs and can run privileged commands on your device. **Use at your own risk.** You are solely responsible for any impact to your network, device stability, security, or warranty. Firewalla may change internal behavior at any time, which could break this software without notice.
+
 ### Address placeholders
 
 | Placeholder | Role |
