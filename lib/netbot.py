@@ -71,11 +71,20 @@ def bridge_health() -> dict[str, Any]:
     return _http_json("GET", f"{BRIDGE_URL}/health", timeout=10.0)
 
 
-def netbot_invoke(mtype: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+def netbot_invoke(
+    mtype: str,
+    data: dict[str, Any] | None = None,
+    *,
+    target: str | None = None,
+) -> dict[str, Any]:
+    body: dict[str, Any] = {"mtype": mtype, "data": dict(data or {})}
+    resolved_target = target or body["data"].pop("target", None)
+    if resolved_target:
+        body["target"] = resolved_target
     payload = _http_json(
         "POST",
         f"{BRIDGE_URL}/invoke",
-        {"mtype": mtype, "data": data or {}},
+        body,
     )
     result = payload.get("result") or {}
     code = result.get("code", 500)
@@ -113,3 +122,53 @@ def local_get(path: str) -> Any:
 def local_post(path: str, body: dict[str, Any]) -> Any:
     url = f"{LOCAL_API_URL}/v1/{path.lstrip('/')}"
     return _http_json("POST", url, body, timeout=60.0)
+
+
+def list_policies() -> list[dict[str, Any]]:
+    result = netbot_get("policies")
+    data = result.get("data") or result
+    policies = data.get("policies") if isinstance(data, dict) else []
+    return policies if isinstance(policies, list) else []
+
+
+def qos_policies_for_mac(mac: str) -> list[dict[str, Any]]:
+    norm = mac.upper().replace("-", ":")
+    out: list[dict[str, Any]] = []
+    for policy in list_policies():
+        if str(policy.get("action", "")).lower() != "qos":
+            continue
+        if str(policy.get("disabled", "0")) not in ("0", ""):
+            continue
+        scope = policy.get("scope") or []
+        if norm in {str(s).upper().replace("-", ":") for s in scope}:
+            out.append(policy)
+    return out
+
+
+def ensure_mac_qos_rule(
+    mac: str,
+    *,
+    traffic_direction: str,
+    notes: str,
+    rate_limit: int | None = None,
+    priority: int | None = None,
+) -> Any:
+    scoped = qos_policies_for_mac(mac)
+    existing = next((p for p in scoped if p.get("notes") == notes), None)
+    value: dict[str, Any] = {
+        "type": "mac",
+        "action": "qos",
+        "direction": "bidirection",
+        "trafficDirection": traffic_direction,
+        "scope": [mac.upper().replace("-", ":")],
+        "qdisc": "fq_codel",
+        "disabled": "0",
+        "notes": notes,
+    }
+    if rate_limit is not None:
+        value["rateLimit"] = rate_limit
+    if priority is not None:
+        value["priority"] = priority
+    if existing and existing.get("pid"):
+        return netbot_cmd("policy:update", {"pid": existing["pid"], **value})
+    return netbot_cmd("policy:create", value)

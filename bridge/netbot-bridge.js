@@ -35,23 +35,26 @@ function msgId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function buildEnvelope(mtype, data) {
+function buildEnvelope(mtype, data, target) {
   const id = msgId();
   const payload = { ...(data || {}), eid };
+  const obj = { mtype, data: payload, type: 'jsonmsg', id };
+  if (target) obj.target = target;
   return {
     mtype: 'msg',
     message: {
-      obj: { mtype, data: payload, type: 'jsonmsg', id },
+      obj,
       type: 'jsondata',
       appInfo: { eid, version: '1.0' },
     },
   };
 }
 
-async function invokeNetbot(mtype, data) {
+async function invokeNetbot(mtype, data, target) {
   await loadIdentity();
   const controller = await cloudWrapper.getNetBotController(gid);
-  return controller.msgHandlerAsync(gid, buildEnvelope(mtype, data));
+  const resolvedTarget = target || (data && data.target) || undefined;
+  return controller.msgHandlerAsync(gid, buildEnvelope(mtype, data, resolvedTarget));
 }
 
 function readBody(req) {
@@ -101,7 +104,7 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 400, { error: 'mtype required' });
         return;
       }
-      const result = await invokeNetbot(mtype, data);
+      const result = await invokeNetbot(mtype, data, body.target);
       sendJson(res, 200, { ok: true, result });
     } catch (err) {
       sendJson(res, 500, { error: String(err.message || err) });

@@ -133,10 +133,11 @@ class FirewallaApiHandler(BaseHTTPRequestHandler):
     def _handle_netbot_post(self, body: dict[str, Any]) -> None:
         mtype = body.get("mtype")
         data = body.get("data") or {}
+        target = body.get("target")
         if not mtype:
             json_response(self, 400, {"error": "mtype required (get, cmd, set, ...)"})
             return
-        result = netbot_invoke(str(mtype), dict(data))
+        result = netbot_invoke(str(mtype), dict(data), target=target)
         json_response(self, 200, {"ok": True, "result": result})
 
     def _handle_local(self, subpath: str) -> None:

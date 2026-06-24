@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import tempfile
+import tempfile
 from pathlib import Path
 
 TOOLS_DIR = Path(os.environ.get("FIREWALLA_TOOLS_DIR", "/home/pi/gaming-tools"))
@@ -25,11 +26,13 @@ ALLOWED_SCRIPTS = frozenset(
         "gaming-firewalla-tune.sh",
         "gaming-processor-tune.sh",
         "gaming-link-status.sh",
+        "gaming-flood-guard.sh",
+        "gaming-moca-tune.sh",
         "xbox-scope.sh",
     }
 )
 
-ALLOWED_DATA_FILES = frozenset({"route-probes.json", "gaming.conf"})
+ALLOWED_DATA_FILES = frozenset({"route-probes.json", "gaming.conf", "moca-adapter-lib.py"})
 
 ALLOWED_API_FILES = frozenset(
     {
@@ -119,9 +122,23 @@ def list_scripts() -> list[str]:
 
 
 def _write_executable(path: Path, content: bytes, mode: int) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(content)
-    path.chmod(mode)
+    if not str(path.resolve()).startswith(str(TOOLS_DIR.resolve())):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        path.chmod(mode)
+        return
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        tmp_file.write(content)
+        tmp_path = tmp_file.name
+    proc = subprocess.run(
+        ["sudo", "install", "-m", oct(mode)[2:], tmp_path, str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    Path(tmp_path).unlink(missing_ok=True)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr.strip() or f"install failed ({proc.returncode})")
 
 
 def install_tool(name: str, content_b64: str, *, mode: int = 0o755) -> dict[str, object]:
