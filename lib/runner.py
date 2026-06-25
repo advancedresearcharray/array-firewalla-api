@@ -27,6 +27,7 @@ ALLOWED_SCRIPTS = frozenset(
         "gaming-processor-tune.sh",
         "gaming-link-status.sh",
         "gaming-flood-guard.sh",
+        "gaming-packet-shield.sh",
         "gaming-moca-tune.sh",
         "xbox-scope.sh",
     }
